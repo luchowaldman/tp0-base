@@ -10,16 +10,67 @@ services:
     container_name: client1
     depends_on:
     - server
-    entrypoint: /client
+    entrypoint: python3 /main.py
     environment:
-    - CLI_ID=1
-    - CLI_LOG_LEVEL=DEBUG
+    - PYTHONUNBUFFERED=1
+    - LOGGING_LEVEL=DEBUG
     image: client:latest
     networks:
     - testing_net
     volumes:
     - ./volumen:/volumen
-
+  client2:
+    container_name: client2
+    depends_on:
+    - server
+    entrypoint: python3 /main.py
+    environment:
+    - PYTHONUNBUFFERED=1
+    - LOGGING_LEVEL=DEBUG
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - ./volumen:/volumen
+  client3:
+    container_name: client3
+    depends_on:
+    - server
+    entrypoint: python3 /main.py
+    environment:
+    - PYTHONUNBUFFERED=1
+    - LOGGING_LEVEL=DEBUG
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - ./volumen:/volumen
+  client4:
+    container_name: client4
+    depends_on:
+    - server
+    entrypoint: python3 /main.py
+    environment:
+    - PYTHONUNBUFFERED=1
+    - LOGGING_LEVEL=DEBUG
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - ./volumen:/volumen
+  client5:
+    container_name: client5
+    depends_on:
+    - server
+    entrypoint: python3 /main.py
+    environment:
+    - PYTHONUNBUFFERED=1
+    - LOGGING_LEVEL=DEBUG
+    image: client:latest
+    networks:
+    - testing_net
+    volumes:
+    - ./volumen:/volumen
   server:
     container_name: server
     entrypoint: python3 /main.py
@@ -31,5 +82,4 @@ services:
     - testing_net
     volumes:
     - ./volumen:/volumen
-
 version: '3.9'
