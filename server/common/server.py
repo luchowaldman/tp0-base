@@ -4,6 +4,7 @@ import signal
 import sys
 from common.decoder import Bet, BetDecoder
 from common.utils import store_bets
+from common.mensaje import TipoMensaje
 
 
 class Server:
@@ -56,14 +57,17 @@ class Server:
             
             while not com_terminada:
                 msg = self.LeerDatos(client_sock, 6)
-                if msg.startswith("A"):
-                    # Va a recibir chunk de apuestas apuestas, verifica la cantidad
-                    cantidad = int(msg[1:])
+                mensaje = BetDecoder.decode_mensaje(msg)
+                if mensaje.tipo == TipoMensaje.ENVIA_APUESTAS:
+                    agencia = int(msg[1:])
+                    # leo 5 caracteres para saber cuantas apuestas se van a enviar
+                    total = self.LeerDatos(client_sock, 5)
+                    cantidad = int(total)
                     tamano_apuesta = (cantidad * BetDecoder.tamanio_apuesta())
                     apuestas_recibidas = self.LeerDatos(client_sock, tamano_apuesta)
-                    apuestas = BetDecoder.decode_vector(apuestas_recibidas)
+                    apuestas = BetDecoder.decode_vector(apuestas_recibidas, agencia)
                     store_bets(apuestas)
-                elif msg.startswith("F"):
+                elif mensaje.tipo == TipoMensaje.FIN_ENVIO:
                     # Termino de enviar apuestas
                     com_terminada = True
                     client_sock.send("OK".format(msg).encode('utf-8'))

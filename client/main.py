@@ -55,9 +55,9 @@ def main():
                   f"logging_level: {logging_level} | server ip: {server_ip}")
 
     # Initialize client
-    client = Client(server_ip, port)
-
     agencia = config_params["agencia"]
+    client = Client(server_ip, port, agencia)
+
     archivo_apuestas = config_params["archivo_apuestas"]
     apuestas_por_envio = config_params["apuestas_por_envio"]
     client.conectar()
@@ -77,7 +77,7 @@ def main():
                         client.enviar_apuestas(apuestas)
                         apuestas = []  # Vaciar el vector de apuestas después de enviarlas
             client.enviar_apuestas(apuestas)
-        resultado_finapuestas = client.enviar_finapuestas(agencia)
+        resultado_finapuestas = client.enviar_finapuestas()
     except Exception as e:
         logging.error(e)
     finally:
