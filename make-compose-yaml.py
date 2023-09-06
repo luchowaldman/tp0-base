@@ -1,5 +1,54 @@
+import configparser
 import sys
 import yaml
+import os
+import shutil
+
+
+
+def modificar_valor_agencia(archivo_ini, nuevo_valor_agencia):
+    # Crear un objeto ConfigParser
+    config = configparser.ConfigParser()
+
+    # Leer el archivo INI
+    config.read(archivo_ini)
+
+    # Actualizar el valor de AGENCIA
+    config.set('DEFAULT', 'AGENCIA', str(nuevo_valor_agencia))
+
+    # Escribir los cambios de vuelta al archivo
+    with open(archivo_ini, 'w') as configfile:
+        config.write(configfile)
+
+
+
+
+def crear_carpeta_y_copiar_archivos(ID_CLIENT):
+    # Directorio base donde se encuentra este script
+    directorio_base = os.getcwd()
+    
+    # Crear la carpeta en ./volumen_client{ID_CLIENT}
+    carpeta_destino = os.path.join(directorio_base, f'./volumen_client{ID_CLIENT}')
+    os.makedirs(carpeta_destino, exist_ok=True)
+    
+    
+    try:
+        # Copiar agency-{ID_CLIENT}.csv desde ./data        
+        shutil.copy(f'./.data/agency-{ID_CLIENT}.csv', carpeta_destino)
+        # Copiar config_client.ini desde ./volumen
+        shutil.copy('./volumen/config_cliente.ini', carpeta_destino)
+        archivo_destino = os.path.join(carpeta_destino, 'agency.csv')
+        os.rename(os.path.join(carpeta_destino, f'agency-{ID_CLIENT}.csv'), archivo_destino)
+
+        #setea el valor de agencia
+        archivo_ini = f'./volumen_client{ID_CLIENT}/config_cliente.ini'        
+        modificar_valor_agencia(archivo_ini, ID_CLIENT)
+        
+    except FileNotFoundError:
+        print("No se encontraron los archivos de origen.")
+    except Exception as e:
+        print(f"Error al copiar archivos: {str(e)}")
+
 
 def generate_docker_compose(client_count):
     docker_compose = {
@@ -31,6 +80,7 @@ def generate_docker_compose(client_count):
     }
 
     for i in range(1, client_count + 1):
+        crear_carpeta_y_copiar_archivos(i)
         client_name = f'client{i}'
         docker_compose['services'][client_name] = {
             'container_name': client_name,
@@ -42,7 +92,7 @@ def generate_docker_compose(client_count):
             ],
             'networks': ['testing_net'],
             'depends_on': ['server'],
-            'volumes': ['./volumen:/volumen']
+            'volumes': [f'./volumen_client{i}:/volumen']
             
         }
 
@@ -53,6 +103,7 @@ def write_docker_compose_yaml(docker_compose, filename='docker-compose-dev.yaml'
         yaml.dump(docker_compose, yaml_file, default_flow_style=False)
 
 if __name__ == "__main__":
+    generate_docker_compose(5)
     if len(sys.argv) != 2:
         print("Uso: python script.py <numero_de_clientes>")
         sys.exit(1)
