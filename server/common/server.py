@@ -34,6 +34,16 @@ class Server:
             client_sock = self.__accept_new_connection()
             self.__handle_client_connection(client_sock)
 
+
+    def LeerDatos(self, client_sock, caracteres):
+        datos = client_sock.recv(caracteres).decode('utf-8')
+        while (len(datos) < caracteres):                        
+            datos  = datos + client_sock.recv(caracteres - len(datos)).decode('utf-8')
+        return datos
+                    
+
+        
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -42,20 +52,21 @@ class Server:
         client socket will also be closed
         """
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-
-            apuesta = BetDecoder.decode(msg)
+            com_terminada = False
             
-            to_store = [apuesta]
-            store_bets(to_store)
-            logging.info(f'action: apuesta_almacenada | result: success | dni: ${apuesta.document} | numero: ${apuesta.number}.')
-            
-
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            while not com_terminada:
+                msg = self.LeerDatos(client_sock, 6)
+                if msg.startswith("A"):
+                    # Va a recibir chunk de apuestas apuestas, verifica la cantidad
+                    cantidad = int(msg[1:])
+                    tamano_apuesta = (cantidad * BetDecoder.tamanio_apuesta())
+                    apuestas_recibidas = self.LeerDatos(client_sock, tamano_apuesta)
+                    apuestas = BetDecoder.decode_vector(apuestas_recibidas)
+                    store_bets(apuestas)
+                elif msg.startswith("F"):
+                    # Termino de enviar apuestas
+                    com_terminada = True
+                    client_sock.send("OK".format(msg).encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
