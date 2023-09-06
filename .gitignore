@@ -3,3 +3,15 @@
 
 # Executables
 bin/
+volumen_client5/config_cliente.ini
+volumen_client5/agency.csv
+volumen_client4/config_cliente.ini
+volumen_client4/agency.csv
+volumen_client3/config_cliente.ini
+volumen_client3/agency.csv
+volumen_client2/config_cliente.ini
+volumen_client2/agency.csv
+volumen_client1/config_cliente.ini
+volumen_client1/agency.csv
+server/common/__pycache__/__init__.cpython-311.pyc
+server/common/__pycache__/__init__.cpython-311.pyc
