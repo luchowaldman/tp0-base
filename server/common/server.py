@@ -3,6 +3,7 @@ import socket
 import logging
 import signal
 import sys
+import threading
 from common.decoder import Bet, BetDecoder
 from common.utils import has_won, load_bets, store_bets
 from common.mensaje import TipoMensaje
@@ -18,6 +19,9 @@ class Server:
         self._running = True
         self._mensajeganadores = ""
         self.clientes_sinapuestas = listen_backlog
+        self.lock_archivo = threading.Lock()
+        self.lock_clientes_sinapuestas = threading.Lock()
+
                 
         # Register a signal handler for SIGTERM
         signal.signal(signal.SIGTERM, self.handle_sigterm)
@@ -37,7 +41,9 @@ class Server:
         # the server
         while self._running:
             client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            hilo = threading.Thread(target=self.__handle_client_connection,
+                                    args=(client_sock,))
+            hilo.start()
 
 
     def LeerDatos(self, client_sock, caracteres):
@@ -70,19 +76,24 @@ class Server:
                     tamano_apuesta = (cantidad * BetDecoder.tamanio_apuesta())
                     apuestas_recibidas = self.LeerDatos(client_sock, tamano_apuesta)
                     apuestas = BetDecoder.decode_vector(apuestas_recibidas, agencia)
-                    store_bets(apuestas)
+                    with self.lock_archivo:
+                        store_bets(apuestas)
                 elif mensaje.tipo == TipoMensaje.FIN_ENVIO:
                     # Termino de enviar apuestas
-                    self.clientes_sinapuestas = self.clientes_sinapuestas - 1
+                    with self.lock_clientes_sinapuestas:
+                        self.clientes_sinapuestas = self.clientes_sinapuestas - 1
                     com_terminada = True
                     client_sock.send(BetEncoder.FinApuestasOk())
                 elif mensaje.tipo == TipoMensaje.CONSULTA_GANADOR:
                     # Termino de enviar apuestas
                     com_terminada = True
-                    if (self.clientes_sinapuestas > 0):
+                    with self.lock_clientes_sinapuestas:
+                        sinsorteo = self.clientes_sinapuestas > 0
+                    if (sinsorteo):
                         client_sock.send(BetEncoder.SinSorteo())
                     else:
-                        bets = load_bets()
+                        with self.lock_archivo:
+                            bets = load_bets()
                         bets_winner = []
                         for bet in bets:
                             if has_won(bet):
