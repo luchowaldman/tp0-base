@@ -43,6 +43,9 @@ class BetDecoder:
         if msg.startswith("F"):
             agencia = int(msg[1:])
             return Mensaje(TipoMensaje.FIN_ENVIO, agencia)
+        if msg.startswith("C"):
+            agencia = int(msg[1:])
+            return Mensaje(TipoMensaje.CONSULTA_GANADOR, agencia)
         
                 
         

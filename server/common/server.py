@@ -1,10 +1,12 @@
+from codecs import getencoder
 import socket
 import logging
 import signal
 import sys
 from common.decoder import Bet, BetDecoder
-from common.utils import store_bets
+from common.utils import has_won, load_bets, store_bets
 from common.mensaje import TipoMensaje
+from common.betencoder import BetEncoder
 
 
 class Server:
@@ -14,6 +16,8 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._running = True
+        self._mensajeganadores = ""
+        self.clientes_sinapuestas = listen_backlog
                 
         # Register a signal handler for SIGTERM
         signal.signal(signal.SIGTERM, self.handle_sigterm)
@@ -69,8 +73,23 @@ class Server:
                     store_bets(apuestas)
                 elif mensaje.tipo == TipoMensaje.FIN_ENVIO:
                     # Termino de enviar apuestas
+                    self.clientes_sinapuestas = self.clientes_sinapuestas - 1
                     com_terminada = True
-                    client_sock.send("OK".format(msg).encode('utf-8'))
+                    client_sock.send(BetEncoder.FinApuestasOk())
+                elif mensaje.tipo == TipoMensaje.CONSULTA_GANADOR:
+                    # Termino de enviar apuestas
+                    com_terminada = True
+                    if (self.clientes_sinapuestas > 0):
+                        client_sock.send(BetEncoder.SinSorteo())
+                    else:
+                        bets = load_bets()
+                        bets_winner = []
+                        for bet in bets:
+                            if has_won(bet):
+                                if bet.agency == mensaje.id_agencia:
+                                    bets_winner.append(bet)
+                        client_sock.send(BetEncoder.ConSorteo(bets_winner))
+
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:

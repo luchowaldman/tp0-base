@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 from configparser import ConfigParser
-from common.apuesta import Apuesta
+from common.transmicioncontroller import TransmicionController
 from common.client import Client
 import logging
 import os
-import time
 
 def initialize_config():
     """ Parse env variables or config file to find program config params
@@ -60,34 +59,10 @@ def main():
 
     archivo_apuestas = config_params["archivo_apuestas"]
     apuestas_por_envio = config_params["apuestas_por_envio"]
-    client.conectar()
-    apuestas = []
-    resultado_finapuestas = ""
-    apuestas_enviadas = 0
-    try:
 
-        with open(archivo_apuestas, 'r') as archivo:
-            for linea in archivo:
-                partes = linea.strip().split(',')
-                if len(partes) == 5:
-                    apuesta = Apuesta(agencia, partes[0], partes[1], partes[2], partes[3], partes[4])
-                    apuestas.append(apuesta)
-                    apuestas_enviadas = apuestas_enviadas + 1
-                    if len(apuestas) >= apuestas_por_envio:
-                        client.enviar_apuestas(apuestas)
-                        apuestas = []  # Vaciar el vector de apuestas después de enviarlas
-            client.enviar_apuestas(apuestas)
-        resultado_finapuestas = client.enviar_finapuestas()
-    except Exception as e:
-        logging.error(e)
-    finally:
-        client.cerrar_conexion()
-    if (not resultado_finapuestas):
-        logging.error("El archivo no se trasmitio correctamiente")
-        exit(1)
-    else:
-        logging.info(f"{apuestas_enviadas} Apuestas transmitidos correctamente")
-        
+    controlador = TransmicionController(client)
+    controlador.TrasmitirArchivo(archivo_apuestas, apuestas_por_envio)
+    controlador.VerificarGanadores()
 
     
 

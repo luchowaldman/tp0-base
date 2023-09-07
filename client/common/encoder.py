@@ -4,8 +4,8 @@ class ApuestaEncoder:
     @staticmethod
     def encode(apuesta):
         # Verificar y ajustar la longitud de cada campo
-        nombre = apuesta.nombre[:10].ljust(30)
-        apellido = apuesta.apellido[:10].ljust(30)
+        nombre = apuesta.nombre[:30].ljust(30)
+        apellido = apuesta.apellido[:30].ljust(30)
         dni = apuesta.dni.zfill(8)[:8]
         nacimiento = apuesta.nacimiento[:10].ljust(10)
         numero = apuesta.numero.zfill(4)[:4]
@@ -33,3 +33,10 @@ class ApuestaEncoder:
         # Aplicar la función encode() a cada apuesta en el vector
         agencia = str(agencia).zfill(5)[:5]
         return f"F{agencia}"
+    
+
+    @staticmethod
+    def encode_consultaganador(agencia):
+        # Aplicar la función encode() a cada apuesta en el vector
+        agencia = str(agencia).zfill(5)[:5]
+        return f"C{agencia}"
