@@ -21,7 +21,7 @@ class Server:
         self.clientes_sinapuestas = listen_backlog
         self.lock_archivo = threading.Lock()
         self.lock_clientes_sinapuestas = threading.Lock()
-
+        self._active_threads = []
                 
         # Register a signal handler for SIGTERM
         signal.signal(signal.SIGTERM, self.handle_sigterm)
@@ -40,11 +40,27 @@ class Server:
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
         while self._running:
+            self.__cleanup_threads()
             client_sock = self.__accept_new_connection()
             hilo = threading.Thread(target=self.__handle_client_connection,
                                     args=(client_sock,))
             hilo.start()
+            self._active_threads.append(hilo)
 
+        self._server_socket.close()
+
+
+    def __cleanup_threads(self):
+        # Verificar los hilos que han terminado y unirlos
+        threads_to_remove = []
+        for thread in self._active_threads:
+            if not thread.is_alive():
+                thread.join()
+                threads_to_remove.append(thread)
+
+        # Eliminar los hilos terminados de la lista
+        for thread in threads_to_remove:
+            self._active_threads.remove(thread)
 
     def LeerDatos(self, client_sock, caracteres):
         datos = client_sock.recv(caracteres).decode('utf-8')
