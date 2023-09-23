@@ -44,7 +44,8 @@ class TransmicionController:
                     if not self._running:
                         break            
                 if not self._running:    
-                    self.client.enviar_apuestas(apuestas)
+                    if len(apuestas) > 0:
+                        self.client.enviar_apuestas(apuestas)
             resultado_finapuestas = self.client.enviar_finapuestas()
         except Exception as e:
             logging.error(e)

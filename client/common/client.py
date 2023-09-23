@@ -21,19 +21,19 @@ class Client:
             # Conexión al servidor
             self.cliente_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.cliente_socket.connect((self.servidor_host, self.servidor_puerto))
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as e:
             logging.error("Error: No se pudo conectar al servidor.")
-            exit(1)
+            raise e
         except Exception as e:
             logging.error(f"Error: {e}")
-            exit(1)
+            raise e
 
     def enviar_finapuestas(self):
         mensaje = ApuestaEncoder.encode_finapuestas(self.agencia)
         try:
             logging.debug(f"action: send-fin-apuestas  {mensaje}")
             # Envío del mensaje al servidor
-            self.cliente_socket.sendall(mensaje.encode())
+            self.EscribirDatos(mensaje)
 
 
             # Recepción de la confirmación del servidor
@@ -51,6 +51,14 @@ class Client:
         while (len(datos) < caracteres):                        
             datos  = datos + self.cliente_socket.recv(caracteres - len(datos)).decode('utf-8')
         return datos
+    def EscribirDatos(self, mensaje):
+        mensaje_codificado = mensaje.encode('utf-8')
+        total_enviado = 0
+
+        while total_enviado < len(mensaje_codificado):
+            bytes_enviados = self.cliente_socket.send(mensaje_codificado[total_enviado:])            
+            total_enviado += bytes_enviados
+
   
     def get_ganadores(self):
         return self.ganadores
@@ -65,7 +73,7 @@ class Client:
         try:
             logging.debug(f"action: send-consulta ganador  {mensaje}")
             # Envío del mensaje al servidor
-            self.cliente_socket.sendall(mensaje.encode())
+            self.EscribirDatos(mensaje)
 
 
             # Recepción de la respuesta del servidor
@@ -86,7 +94,7 @@ class Client:
         mensaje = ApuestaEncoder.encode_vector(apuesta, self.agencia)
         try:
             # Envío del mensaje al servidor
-            self.cliente_socket.sendall(mensaje.encode())
+            self.EscribirDatos(mensaje)
 
         except Exception as e:
             print(f"Error al enviar la apuesta: {e}")

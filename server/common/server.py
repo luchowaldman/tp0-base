@@ -69,7 +69,14 @@ class Server:
         return datos
                     
 
-        
+    def EscribirDatos(self, client_sock, mensaje):
+        mensaje_codificado = mensaje.encode('utf-8')
+        total_enviado = 0
+
+        while total_enviado < len(mensaje_codificado):
+            bytes_enviados = client_sock.send(mensaje_codificado[total_enviado:])            
+            total_enviado += bytes_enviados
+
 
     def __handle_client_connection(self, client_sock):
         """
@@ -99,14 +106,14 @@ class Server:
                     with self.lock_clientes_sinapuestas:
                         self.clientes_sinapuestas = self.clientes_sinapuestas - 1
                     com_terminada = True
-                    client_sock.send(BetEncoder.FinApuestasOk())
+                    self.EscribirDatos(client_sock, BetEncoder.FinApuestasOk())
                 elif mensaje.tipo == TipoMensaje.CONSULTA_GANADOR:
                     # Termino de enviar apuestas
                     com_terminada = True
                     with self.lock_clientes_sinapuestas:
                         sinsorteo = self.clientes_sinapuestas > 0
                     if (sinsorteo):
-                        client_sock.send(BetEncoder.SinSorteo())
+                        self.EscribirDatos(client_sock, BetEncoder.SinSorteo())
                     else:
                         with self.lock_archivo:
                             bets = load_bets()
@@ -115,7 +122,7 @@ class Server:
                             if has_won(bet):
                                 if bet.agency == mensaje.id_agencia:
                                     bets_winner.append(bet)
-                        client_sock.send(BetEncoder.ConSorteo(bets_winner))
+                        self.EscribirDatos(client_sock, BetEncoder.ConSorteo(bets_winner))
 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")

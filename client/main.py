@@ -56,10 +56,8 @@ def main():
     # Initialize client
     agencia = config_params["agencia"]
     client = Client(server_ip, port, agencia)
-
     archivo_apuestas = config_params["archivo_apuestas"]
     apuestas_por_envio = config_params["apuestas_por_envio"]
-
     controlador = TransmicionController(client)
     controlador.TrasmitirArchivo(archivo_apuestas, apuestas_por_envio)
     controlador.VerificarGanadores()
