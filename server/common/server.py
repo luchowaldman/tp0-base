@@ -39,13 +39,23 @@ class Server:
 
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
-        while self._running:
-            self.__cleanup_threads()
-            client_sock = self.__accept_new_connection()
-            hilo = threading.Thread(target=self.__handle_client_connection,
-                                    args=(client_sock,))
-            hilo.start()
-            self._active_threads.append(hilo)
+        try:
+            while self._running:
+                self.__cleanup_threads()
+                client_sock = self.__accept_new_connection()
+                hilo = threading.Thread(target=self.__handle_client_connection,
+                                        args=(client_sock,))
+                hilo.start()
+                self._active_threads.append(hilo)
+        except OSError as e:
+            if e.errno == 9:
+                logging.log(f'Salida GRACEFUL')
+            else:
+                # Manejar otros casos de OSError si es necesario
+                raise e
+        except Exception as ex:
+            # Captura otras excepciones generales si es necesario
+            raise ex
 
         self._server_socket.close()
 
@@ -138,6 +148,7 @@ class Server:
         """
         logging.info("Received SIGTERM signal. Gracefully shutting down...")
         self._running = False
+        self._server_socket.close()
 
     def __accept_new_connection(self):
         """
