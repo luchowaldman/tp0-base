@@ -32,4 +32,10 @@ services:
     volumes:
     - ./volumen:/volumen
 
+  prueba:
+    container_name: prueba
+    entrypoint: /testserver.sh  
+    image: testserver:latest  
+    networks:
+      - testing_net
 version: '3.9'
